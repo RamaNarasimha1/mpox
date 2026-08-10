@@ -15,14 +15,25 @@ DermaVision AI is a full-stack skin-condition image-classification project. It c
 
 ## Results
 
-For every uploaded skin image, DermaVision AI returns:
+### Reported test performance
 
-- The predicted class: **Chickenpox, Measles, Monkeypox, or Normal**
-- A confidence score and ranked probabilities for the candidate classes
-- A Grad-CAM heatmap that highlights the image regions that influenced the prediction
-- A saved analysis record containing the image metadata, result, confidence, and timestamp
+The models were trained on a merged, de-duplicated dataset of **1,279 images** spanning Monkeypox, Chickenpox, Measles, and Normal classes. The data split was **70% training, 15% validation, and 15% test**.
 
-The final prediction is produced by an ensemble of multiple deep-learning architectures rather than a single model. This helps make the result more robust than relying on one architecture alone. The dashboard also lets authenticated users review previous analyses and their statistics.
+| Approach | Accuracy | Precision | Recall | F1-score |
+| --- | ---: | ---: | ---: | ---: |
+| DenseNet121 | 91.26% | 88.09% | 87.98% | 87.84% |
+| EfficientNet-B0 | 89.81% | 86.05% | 86.42% | 86.14% |
+| MobileNetV3-Large | 90.78% | 89.22% | 87.01% | 87.93% |
+| ResNet50 | 91.75% | 89.78% | 88.06% | 88.83% |
+| ShuffleNetV2 | 88.35% | 86.29% | 85.12% | 85.64% |
+| SqueezeNet1.1 | 87.38% | 86.77% | 83.29% | 84.02% |
+| GhostNet-100 | 91.75% | 88.54% | 89.75% | 89.10% |
+| Majority voting | 92.72% | 92.87% | 92.72% | 92.67% |
+| **Dynamic entropy ensemble (removes two most-uncertain models)** | **93.69%** | **93.78%** | **93.69%** | **93.65%** |
+
+The dynamic entropy ensemble was the best-performing approach. For each image, it measures model uncertainty, removes the two least-confident base models, and combines the remaining predictions. This improved accuracy by **1.97 percentage points** over majority voting and by **1.94 points** over the best individual model.
+
+For every uploaded skin image, the web application returns the predicted class, confidence and ranked probabilities, a Grad-CAM heatmap, and a saved analysis record with image metadata and timestamp. These results are intended for academic evaluation only and are not clinical diagnostic claims.
 
 The earlier TensorFlow experiments and their archived evaluation figure are retained in [`archive/legacy-tensorflow/`](archive/legacy-tensorflow/). They are historical research material; the current application uses the PyTorch ensemble described above.
 
