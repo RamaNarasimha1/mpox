@@ -13,6 +13,19 @@ DermaVision AI is a full-stack skin-condition image-classification project. It c
 - Batch image analysis and local/MinIO-compatible file storage
 - Docker Compose development environment with PostgreSQL, Redis, and MinIO
 
+## Results
+
+For every uploaded skin image, DermaVision AI returns:
+
+- The predicted class: **Chickenpox, Measles, Monkeypox, or Normal**
+- A confidence score and ranked probabilities for the candidate classes
+- A Grad-CAM heatmap that highlights the image regions that influenced the prediction
+- A saved analysis record containing the image metadata, result, confidence, and timestamp
+
+The final prediction is produced by an ensemble of multiple deep-learning architectures rather than a single model. This helps make the result more robust than relying on one architecture alone. The dashboard also lets authenticated users review previous analyses and their statistics.
+
+The earlier TensorFlow experiments and their archived evaluation figure are retained in [`archive/legacy-tensorflow/`](archive/legacy-tensorflow/). They are historical research material; the current application uses the PyTorch ensemble described above.
+
 ## Tech stack
 
 | Area | Technologies |
