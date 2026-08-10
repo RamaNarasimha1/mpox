@@ -1,0 +1,44 @@
+# Environment and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+.venv/
+venv/
+env/
+
+# Node / frontend build output
+frontend/node_modules/
+frontend/dist/
+frontend/dist-ssr/
+*.log
+
+# Runtime data and local services
+backend/uploads/
+postgres_data/
+minio_data/
+*.sqlite3
+*.db
+
+# ML artifacts and datasets (publish separately with Git LFS or a release)
+backend/models/*.pth
+backend/models/*.pt
+backend/models/*.onnx
+DATA/
+*.zip
+
+# OS and editor files
+.DS_Store
+Thumbs.db
+~$*
+.idea/
+.vscode/*
+!.vscode/extensions.json

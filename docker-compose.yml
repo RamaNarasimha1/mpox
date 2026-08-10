@@ -1,0 +1,121 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    platform: linux/amd64
+    container_name: skin_classifier_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: skin_classifier
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    platform: linux/amd64
+    container_name: skin_classifier_redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  minio:
+    image: minio/minio:latest
+    platform: linux/amd64
+    container_name: skin_classifier_minio
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    platform: linux/amd64
+    container_name: skin_classifier_backend
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/skin_classifier
+      REDIS_URL: redis://redis:6379/0
+      SECRET_KEY: ${SECRET_KEY:-CHANGE_THIS_IN_PRODUCTION}
+      STORAGE_TYPE: local
+      STORAGE_ROOT: /app/uploads
+      MODEL_PATH: /app/models/current_model.pth
+      DEVICE: cpu
+    volumes:
+      - ./backend:/app:cached
+      - uploads:/app/uploads
+      - models:/app/models
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  # celery_worker:
+  #   build:
+  #     context: ./backend
+  #     dockerfile: Dockerfile
+  #   platform: linux/amd64
+  #   container_name: skin_classifier_celery
+  #   environment:
+  #     DATABASE_URL: postgresql://postgres:postgres@db:5432/skin_classifier
+  #     REDIS_URL: redis://redis:6379/0
+  #     STORAGE_ROOT: /app/uploads
+  #     MODEL_PATH: /app/models/current_model.pth
+  #   volumes:
+  #     - ./backend:/app:cached
+  #     - uploads:/app/uploads
+  #     - models:/app/models
+  #   depends_on:
+  #     - redis
+  #     - db
+  #   command: celery -A app.celery_tasks worker --loglevel=info
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    platform: linux/amd64
+    container_name: skin_classifier_frontend
+    environment:
+      VITE_API_URL: http://localhost:8000
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app:cached
+      - /app/node_modules
+    depends_on:
+      - backend
+    command: npm run dev -- --host 0.0.0.0
+
+volumes:
+  postgres_data:
+  minio_data:
+  uploads:
+  models:
